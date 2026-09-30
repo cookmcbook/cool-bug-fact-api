@@ -1,7 +1,7 @@
 package com.stub.rest_sqlite.controllers;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,8 +10,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.data.web.PageableDefault;
 import jakarta.validation.Valid;
 
 import com.stub.rest_sqlite.dto.BugFactRequest;
@@ -28,8 +30,12 @@ public class BugFactController {
     }
 
     @GetMapping
-    public List<BugFactResponse> getAllBugFacts() {
-        return service.findAll().stream().map(BugFactResponse::from).toList();
+    public BugFactPageResponse getAllBugFacts(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String category,
+            @PageableDefault(size = 20) Pageable pageable) {
+        Page<BugFactResponse> facts = service.findPage(q, category, pageable).map(BugFactResponse::from);
+        return BugFactPageResponse.from(facts);
     }
 
     @GetMapping("/{id}")
@@ -40,7 +46,7 @@ public class BugFactController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public BugFactResponse addBugFact(@Valid @RequestBody BugFactRequest request) {
-        return BugFactResponse.from(service.create(request.fact()));
+        return BugFactResponse.from(service.create(request.fact(), request.category(), request.tags()));
     }
 
     @DeleteMapping
@@ -58,6 +64,6 @@ public class BugFactController {
     @PutMapping("/{id}")
     public BugFactResponse updateBugFactById(@PathVariable Integer id,
             @Valid @RequestBody BugFactRequest request) {
-        return BugFactResponse.from(service.update(id, request.fact()));
+        return BugFactResponse.from(service.update(id, request.fact(), request.category(), request.tags()));
     }
 }
