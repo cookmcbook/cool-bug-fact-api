@@ -2,7 +2,7 @@ package com.stub.rest_sqlite.controllers;
 
 import java.util.List;
 
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,51 +11,53 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import jakarta.validation.Valid;
 
-import com.stub.rest_sqlite.entity.BugFact;
-import com.stub.rest_sqlite.repository.BugFactRepository;
+import com.stub.rest_sqlite.dto.BugFactRequest;
+import com.stub.rest_sqlite.dto.BugFactResponse;
+import com.stub.rest_sqlite.service.BugFactService;
 
 @RestController
 @RequestMapping("bug-facts")
 public class BugFactController {
-    private final BugFactRepository repository;
-    
-    public BugFactController(BugFactRepository repository) {
-        this.repository = repository;
+    private final BugFactService service;
+
+    public BugFactController(BugFactService service) {
+        this.service = service;
     }
+
+    @GetMapping
+    public List<BugFactResponse> getAllBugFacts() {
+        return service.findAll().stream().map(BugFactResponse::from).toList();
+    }
+
     @GetMapping("/{id}")
-    public BugFact getBugFact(@PathVariable int id) {
-        return repository.findById(id);
+    public BugFactResponse getBugFact(@PathVariable Integer id) {
+        return BugFactResponse.from(service.findById(id));
     }
 
-    @GetMapping("/all") 
-    public List<BugFact> getAllBugFacts() {
-        return repository.findAll();
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public BugFactResponse addBugFact(@Valid @RequestBody BugFactRequest request) {
+        return BugFactResponse.from(service.create(request.fact()));
     }
 
-    @PostMapping("/add")
-    public BugFact addBugFact(@RequestBody BugFact bugFact) {
-        return repository.save(bugFact);
-    }
-
-    @DeleteMapping("/remove-all")
+    @DeleteMapping
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeAllBugFacts() {
-        repository.deleteAll();
+        service.deleteAll();
     }
 
-    @DeleteMapping("/remove/{id}")
-    public void removeBugFactById(@PathVariable int id) {
-        repository.deleteById(id);
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeBugFactById(@PathVariable Integer id) {
+        service.delete(id);
     }
 
-    @PutMapping("/update/{id}")
-    ResponseEntity<?> updateBugFactById(@RequestBody BugFact bugFact, @PathVariable Integer id) {
-        if (repository.findById(id).isPresent()) {
-            bugFact.setId(id);
-            BugFact saved = repository.save(bugFact);
-            return ResponseEntity.ok(saved);
-        }
-
-        return ResponseEntity.badRequest().body(String.format("BugFact ID: %d is not valid", id));
+    @PutMapping("/{id}")
+    public BugFactResponse updateBugFactById(@PathVariable Integer id,
+            @Valid @RequestBody BugFactRequest request) {
+        return BugFactResponse.from(service.update(id, request.fact()));
     }
 }
