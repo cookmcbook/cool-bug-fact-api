@@ -25,11 +25,21 @@ class BugFactImageControllerTest {
     @Test
     void imageEndpointReturnsJpeg() throws Exception {
         byte[] image = { 1, 2, 3 };
-        when(imageService.renderRandomFact()).thenReturn(image);
+        when(imageService.renderFact(null)).thenReturn(image);
 
         mockMvc.perform(get("/image"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.IMAGE_JPEG))
+                .andExpect(content().bytes(image));
+    }
+
+    @Test
+    void imageEndpointAcceptsFactId() throws Exception {
+        byte[] image = { 4, 5, 6 };
+        when(imageService.renderFact(12)).thenReturn(image);
+
+        mockMvc.perform(get("/image?factId=12"))
+                .andExpect(status().isOk())
                 .andExpect(content().bytes(image));
     }
 }

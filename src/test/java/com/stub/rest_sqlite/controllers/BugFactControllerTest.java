@@ -1,6 +1,7 @@
 package com.stub.rest_sqlite.controllers;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -10,11 +11,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -32,11 +35,13 @@ class BugFactControllerTest {
 
     @Test
     void getAllReturnsFacts() throws Exception {
-        when(service.findAll()).thenReturn(List.of(new BugFact("Use tests.")));
+        BugFact fact = new BugFact("Use tests.");
+        when(service.findPage(any(), any(), any())).thenReturn(new PageImpl<>(List.of(fact)));
 
         mockMvc.perform(get("/bug-facts"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].fact").value("Use tests."));
+            .andExpect(jsonPath("$.content[0].fact").value("Use tests."))
+            .andExpect(jsonPath("$.totalElements").value(1));
     }
 
     @Test
@@ -47,7 +52,7 @@ class BugFactControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.title").value("Invalid request"));
 
-        verify(service, never()).create(any());
+        verify(service, never()).create(anyString(), any(), any());
     }
 
     @Test
@@ -57,5 +62,15 @@ class BugFactControllerTest {
         mockMvc.perform(get("/bug-facts/99"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.title").value("Bug fact not found"));
+    }
+
+    @Test
+    void searchAndMetadataAreAccepted() throws Exception {
+        when(service.findPage(any(), any(), any())).thenReturn(new PageImpl<>(List.of(new BugFact("Java fact"))));
+
+        mockMvc.perform(get("/bug-facts?q=java&category=backend&page=0&size=5"))
+                .andExpect(status().isOk())
+            .andExpect(jsonPath("$.size").value(1))
+            .andExpect(jsonPath("$.totalElements").value(1));
     }
 }

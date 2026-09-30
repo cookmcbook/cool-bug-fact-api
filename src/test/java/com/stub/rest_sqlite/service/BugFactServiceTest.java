@@ -5,6 +5,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,9 +30,11 @@ class BugFactServiceTest {
         when(repository.findById(1)).thenReturn(Optional.of(bugFact));
         when(repository.save(bugFact)).thenReturn(bugFact);
 
-        BugFact updated = service.update(1, "New fact");
+        BugFact updated = service.update(1, "New fact", "java", Set.of("backend"));
 
         assertThat(updated.getFact()).isEqualTo("New fact");
+        assertThat(updated.getCategory()).isEqualTo("java");
+        assertThat(updated.getTags()).containsExactly("backend");
         verify(repository).save(bugFact);
     }
 }
