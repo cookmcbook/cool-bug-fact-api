@@ -34,8 +34,15 @@ public class BugFactImageService {
     }
 
     public byte[] renderRandomFact() {
+        return renderFact(null);
+    }
+
+    public byte[] renderFact(Integer factId) {
         try {
-            return render(factService.findRandom().getFact());
+            String fact = factId == null
+                    ? factService.findRandom().getFact()
+                    : factService.findById(factId).getFact();
+            return render(fact);
         } catch (IOException exception) {
             throw new IllegalStateException("Unable to render bug fact image", exception);
         }

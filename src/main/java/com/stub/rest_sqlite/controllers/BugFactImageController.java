@@ -2,6 +2,7 @@ package com.stub.rest_sqlite.controllers;
 
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.stub.rest_sqlite.service.BugFactImageService;
@@ -15,7 +16,7 @@ public class BugFactImageController {
     }
 
     @GetMapping(value = "/image", produces = MediaType.IMAGE_JPEG_VALUE)
-    public byte[] randomBugFactImage() {
-        return imageService.renderRandomFact();
+    public byte[] randomBugFactImage(@RequestParam(required = false) Integer factId) {
+        return imageService.renderFact(factId);
     }
 }
